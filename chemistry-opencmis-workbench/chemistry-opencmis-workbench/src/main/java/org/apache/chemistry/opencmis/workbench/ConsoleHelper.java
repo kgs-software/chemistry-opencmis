@@ -93,20 +93,27 @@ public class ConsoleHelper {
 
             final Session groovySession = model.getClientSession().getSession();
             final String user = model.getClientSession().getSessionParameters().get(SessionParameter.USER);
-            final String title = "GroovyConsole - Repsository: " + groovySession.getRepositoryInfo().getId();
 
-            final Console console = new Console(parent.getClass().getClassLoader()) {
+            /* Quick fix for MOP issue during execution - at least for me on Java 21
+             * groovy.lang.MissingMethodException: No signature of method: org.apache.chemistry.opencmis.workbench.ConsoleHelper$1.doRun() is applicable for argument types: (Boolean, groovy.console.ui.Console$GroovySourceType, groovy.console.ui.HistoryRecord) values: [false, groovy.console.ui.Console$GroovySourceType@b63de153, ...]
+             * Possible solutions: run(), copy(), cut(), dump(), print(), grep()
+	         *  at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+             */
+            // final String title = "GroovyConsole - Repository: " + groovySession.getRepositoryInfo().getId();
+            final Console console = new Console(parent.getClass().getClassLoader()); /* {
                 @Override
                 public void updateTitle() {
                     JFrame frame = (JFrame) getFrame();
-
+                    runScript();
                     if (getScriptFile() != null) {
                         frame.setTitle(((File) getScriptFile()).getName() + (getDirty() ? " * " : "") + " - " + title);
                     } else {
                         frame.setTitle(title);
                     }
                 }
+
             };
+            */
 
             console.setVariable("session", groovySession);
             console.setVariable("binding", groovySession.getBinding());
