@@ -138,8 +138,9 @@ public class ConsoleHelper {
             jSeparator.setMaximumSize(new Dimension(20, prefMenuBarHeight));
             consoleMenuBar.add(jSeparator);
 
-            String repoIdItemLabel = "<html><b> Repository ID: " + groovySession.getRepositoryInfo().getId() + "</b></html>";
+            String repoIdItemLabel = "Repository ID: " + groovySession.getRepositoryInfo().getId();
             JMenuItem repoIdItem = new JMenuItem(repoIdItemLabel);
+            repoIdItem.setFont(repoIdItem.getFont().deriveFont(Font.BOLD, repoIdItem.getFont().getSize()));
             repoIdItem.setToolTipText("Click to copy repository ID to clipboard");
             repoIdItem.addActionListener(new ActionListener() {
                 @Override
