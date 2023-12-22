@@ -18,13 +18,27 @@
  */
 package org.apache.chemistry.opencmis.workbench;
 
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Desktop;
+import groovy.console.ui.Console;
+import groovy.lang.Binding;
+import groovy.util.GroovyScriptEngine;
+import org.apache.chemistry.opencmis.client.api.Session;
+import org.apache.chemistry.opencmis.commons.SessionParameter;
+import org.apache.chemistry.opencmis.commons.impl.IOUtils;
+import org.apache.chemistry.opencmis.workbench.ClientHelper.FileEntry;
+import org.apache.chemistry.opencmis.workbench.model.ClientModel;
+import org.apache.chemistry.opencmis.workbench.model.ClientSession;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.swing.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
+import java.awt.*;
 import java.awt.Desktop.Action;
-import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -39,28 +53,6 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultEditorKit;
-
-import org.apache.chemistry.opencmis.client.api.Session;
-import org.apache.chemistry.opencmis.commons.SessionParameter;
-import org.apache.chemistry.opencmis.commons.impl.IOUtils;
-import org.apache.chemistry.opencmis.workbench.ClientHelper.FileEntry;
-import org.apache.chemistry.opencmis.workbench.model.ClientModel;
-import org.apache.chemistry.opencmis.workbench.model.ClientSession;
-
-import groovy.lang.Binding;
-import groovy.console.ui.Console;
-import groovy.util.GroovyScriptEngine;
 
 public class ConsoleHelper {
 
@@ -93,20 +85,8 @@ public class ConsoleHelper {
 
             final Session groovySession = model.getClientSession().getSession();
             final String user = model.getClientSession().getSessionParameters().get(SessionParameter.USER);
-            final String title = "GroovyConsole - Repsository: " + groovySession.getRepositoryInfo().getId();
 
-            final Console console = new Console(parent.getClass().getClassLoader()) {
-                @Override
-                public void updateTitle() {
-                    JFrame frame = (JFrame) getFrame();
-
-                    if (getScriptFile() != null) {
-                        frame.setTitle(((File) getScriptFile()).getName() + (getDirty() ? " * " : "") + " - " + title);
-                    } else {
-                        frame.setTitle(title);
-                    }
-                }
-            };
+            final Console console = new Console(parent.getClass().getClassLoader());
 
             console.setVariable("session", groovySession);
             console.setVariable("binding", groovySession.getBinding());
@@ -150,6 +130,27 @@ public class ConsoleHelper {
             JMenu snippetsMenu = new JMenu("Snippets");
             snippetsMenu.setMnemonic(KeyEvent.VK_N);
             consoleMenuBar.add(snippetsMenu);
+
+            // add 'copy repository id' menu item
+
+            JSeparator jSeparator = new JSeparator(JSeparator.VERTICAL);
+            int prefMenuBarHeight = (int) console.getFrame().getRootPane().getJMenuBar().getPreferredSize().getHeight();
+            jSeparator.setMaximumSize(new Dimension(20, prefMenuBarHeight));
+            consoleMenuBar.add(jSeparator);
+
+            String repoIdItemLabel = "<html><b> Repository ID: " + groovySession.getRepositoryInfo().getId() + "</b></html>";
+            JMenuItem repoIdItem = new JMenuItem(repoIdItemLabel);
+            repoIdItem.setToolTipText("Click to copy repository ID to clipboard");
+            repoIdItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    clipboard.setContents(new StringSelection(groovySession.getRepositoryInfo().getId()), null);
+                }
+            });
+            consoleMenuBar.add(repoIdItem);
+
+            // add snippet menu
 
             for (FileEntry entry : readSnippetLibrary()) {
                 String snippet = ClientHelper.readFileAndRemoveHeader(entry.getFile());
